@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Plataforma de Vídeos</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100%;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    .topo {
+      background: linear-gradient(135deg, #1d4ed8, #1e3a8a);
+      padding: 32px 20px;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 1000;
+    }
+
+    .topo h1 {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+
+    .topo p {
+      color: #dbeafe;
+    }
+
+    .btn-fullscreen {
+      position: absolute;
+      right: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 46px;
+      height: 46px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.28);
+      background: rgba(255,255,255,0.08);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: 0.2s ease;
+      padding: 0;
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .btn-fullscreen:hover {
+      background: rgba(255,255,255,0.18);
+      transform: translateY(-50%) scale(1.04);
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 190px auto 30px;
+      padding: 0 16px 80px;
+    }
+
+    .card {
+      background: #111827;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      margin-bottom: 24px;
+    }
+
+    h2, h3 {
+      margin-bottom: 16px;
+    }
+
+    .grid1 {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid #334155;
+      background: #0b1220;
+      color: #ffffff;
+      outline: none;
+      font-size: 15px;
+    }
+
+    textarea {
+      min-height: 110px;
+      resize: vertical;
+    }
+
+    .acoes {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 12px 18px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: 0.2s;
+      background: #2563eb;
+      color: #ffffff;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      opacity: 0.95;
+    }
+
+    .btn-excluir {
+      background: #dc2626;
+    }
+
+    .msg {
+      margin-top: 14px;
+      color: #93c5fd;
+      word-break: break-word;
+    }
+
+    .lista-videos {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-top: 16px;
+    }
+
+    .video-card {
+      background: #081225;
+      border: 1px solid #1f2937;
+      border-radius: 18px;
+      overflow: hidden;
+      min-width: 0;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      position: relative;
+      z-index: 1;
+    }
+
+    .video-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.25);
+    }
+
+    .video-thumb {
+      position: relative;
+      width: 100%;
+      height: 220px;
+      background: #000000;
+      overflow: hidden;
+      cursor: pointer;
+      border-radius: 0;
+    }
+
+    .video-thumb video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      background: #000000;
+      max-width: 100%;
+      max-height: 100%;
+    }
+
+    .video-thumb video::-webkit-media-controls-panel {
+      width: 100%;
+    }
+
+    .video-thumb video:fullscreen,
+    .video-thumb video:-webkit-full-screen {
+      width: 100vw !important;
+      height: 100vh !important;
+      object-fit: contain !important;
+      background: #000 !important;
+    }
+
+    .video-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.22);
+      opacity: 1;
+      transition: opacity 0.25s ease;
+      pointer-events: none;
+    }
+
+    .video-thumb.playing .video-overlay {
+      opacity: 0;
+    }
+
+    .play-circle {
+      width: 74px;
+      height: 74px;
+      border-radius: 50%;
+      background: rgba(37, 99, 235, 0.92);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+      transform: scale(0.95);
+      transition: transform 0.25s ease;
+    }
+
+    .video-thumb:hover .play-circle {
+      transform: scale(1);
+    }
+
+    .play-triangle {
+      width: 0;
+      height: 0;
+      border-top: 12px solid transparent;
+      border-bottom: 12px solid transparent;
+      border-left: 18px solid #ffffff;
+      margin-left: 4px;
+    }
+
+    .video-info {
+      padding: 16px 16px 18px;
+      background: linear-gradient(to bottom, #081225, #0b1730);
+    }
+
+    .video-card h4 {
+      color: #ffffff;
+      font-size: 22px;
+      margin-bottom: 8px;
+      line-height: 1.25;
+    }
+
+    .video-card p {
+      color: #cbd5e1;
+      font-size: 15px;
+      line-height: 1.5;
+      margin-bottom: 14px;
+    }
+
+    .vazio {
+      color: #94a3b8;
+    }
+
+    .btn-chat-flutuante {
+      position: fixed;
+      right: 22px;
+      bottom: 22px;
+      z-index: 9999;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: #ffffff;
+      text-decoration: none;
+      padding: 14px 18px;
+      border-radius: 999px;
+      font-weight: 700;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+      transition: transform 0.2s ease, opacity 0.2s ease;
+    }
+
+    .btn-chat-flutuante:hover {
+      transform: translateY(-2px);
+      opacity: 0.96;
+    }
+
+    /* Área admin começa oculta */
+    #areaAdminVideo {
+      display: none;
+    }
+
+    @media (max-width: 1200px) {
+      .lista-videos {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 900px) {
+      .lista-videos {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 600px) {
+      .lista-videos {
+        grid-template-columns: 1fr;
+      }
+
+      .topo h1 {
+        font-size: 26px;
+      }
+
+      .btn-chat-flutuante {
+        right: 16px;
+        bottom: 16px;
+        padding: 12px 16px;
+        font-size: 14px;
+      }
+
+      .btn-fullscreen {
+        width: 40px;
+        height: 40px;
+        right: 12px;
+        font-size: 22px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="topo">
+    <h1>Plataforma de Vídeos</h1>
+    <p>Upload, visualização e organização de vídeos</p>
+    <button class="btn-fullscreen" id="btnFullscreen" title="Tela cheia" aria-label="Tela cheia">⛶</button>
+  </header>
+
+  <main class="container">
+    <section class="card" id="areaAdminVideo">
+      <h2>Enviar Vídeo</h2>
+
+      <div class="grid1">
+        <input type="text" id="tituloVideo" placeholder="Título do vídeo" />
+        <textarea id="descricaoVideo" placeholder="Descrição do vídeo"></textarea>
+        <input type="file" id="arquivoVideo" accept="video/*" />
+      </div>
+
+      <div class="acoes">
+        <button id="btnUpload">Adicionar vídeo</button>
+      </div>
+
+      <p id="uploadMsg" class="msg"></p>
+    </section>
+
+    <section class="card">
+      <h3>Meus Vídeos</h3>
+      <div id="listaVideos" class="lista-videos"></div>
+    </section>
+  </main>
+
+  <a href="chat.html" class="btn-chat-flutuante">Clique para o chat</a>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+    const SUPABASE_URL = "https://wpgmlaftkosunysjozqj.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_oSoYCmoXNFkisbRTJNs3GA_NXBsJAXD";
+
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        storage: window.sessionStorage,
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      }
+    });
+
+    let usuarioAdmin = false;
+
+    const EMAIL_ADMIN = "adriano_freitas1980@outlook.com";
+
+    const tituloVideo = document.getElementById("tituloVideo");
+    const descricaoVideo = document.getElementById("descricaoVideo");
+    const arquivoVideo = document.getElementById("arquivoVideo");
+    const btnUpload = document.getElementById("btnUpload");
+    const uploadMsg = document.getElementById("uploadMsg");
+    const listaVideos = document.getElementById("listaVideos");
+    const btnFullscreen = document.getElementById("btnFullscreen");
+    const areaAdminVideo = document.getElementById("areaAdminVideo");
+
+    function aplicarControleAdmin() {
+      if (!areaAdminVideo) return;
+      areaAdminVideo.style.display = usuarioAdmin ? "block" : "none";
+    }
+
+    async function verificarSessao() {
+      const { data, error } = await supabaseClient.auth.getSession();
+
+      if (error || !data.session) {
+        window.location.href = "login.html";
+        return false;
+      }
+
+      return true;
+    }
+
+    async function verificarAdmin() {
+      let tentativa = 0;
+      let user = null;
+
+      while (!user && tentativa < 5) {
+        const { data } = await supabaseClient.auth.getUser();
+        user = data.user;
+
+        if (!user) {
+          await new Promise(r => setTimeout(r, 300));
+        }
+
+        tentativa++;
+      }
+
+      if (user && user.email) {
+        const emailLogado = String(user.email).trim().toLowerCase();
+        usuarioAdmin = emailLogado === EMAIL_ADMIN.toLowerCase();
+      } else {
+        usuarioAdmin = false;
+      }
+
+      aplicarControleAdmin();
+      console.log("É admin?", usuarioAdmin);
+    }
+
+    btnFullscreen.addEventListener("click", function () {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(function (err) {
+          alert("Não foi possível ativar a tela cheia.");
+          console.error(err);
+        });
+      } else {
+        document.exitFullscreen();
+      }
+    });
+
+    btnUpload.addEventListener("click", async function () {
+      if (!usuarioAdmin) {
+        uploadMsg.textContent = "Apenas o administrador pode enviar vídeos.";
+        return;
+      }
+
+      const titulo = tituloVideo.value.trim();
+      const descricao = descricaoVideo.value.trim();
+      const file = arquivoVideo.files[0];
+
+      if (!titulo) {
+        uploadMsg.textContent = "Informe o título do vídeo.";
+        return;
+      }
+
+      if (!file) {
+        uploadMsg.textContent = "Selecione um vídeo.";
+        return;
+      }
+
+      try {
+        uploadMsg.textContent = "Enviando vídeo...";
+
+        const extensao = file.name.includes(".") ? file.name.split(".").pop() : "mp4";
+        const nomeArquivo = Date.now() + "-" + Math.random().toString(36).slice(2) + "." + extensao;
+        const caminhoArquivo = nomeArquivo;
+
+        const { error: uploadError } = await supabaseClient.storage
+          .from("video")
+          .upload(caminhoArquivo, file, {
+            cacheControl: "3600",
+            upsert: false,
+            contentType: file.type
+          });
+
+        if (uploadError) {
+          throw uploadError;
+        }
+
+        const { data: publicUrlData } = supabaseClient.storage
+          .from("video")
+          .getPublicUrl(caminhoArquivo);
+
+        const urlVideo = publicUrlData.publicUrl;
+
+        const { error: insertError } = await supabaseClient
+          .from("videos")
+          .insert([
+            {
+              titulo: titulo,
+              descricao: descricao || "Sem descrição",
+              url_video: urlVideo,
+              caminho_arquivo: caminhoArquivo
+            }
+          ]);
+
+        if (insertError) {
+          throw insertError;
+        }
+
+        tituloVideo.value = "";
+        descricaoVideo.value = "";
+        arquivoVideo.value = "";
+        uploadMsg.textContent = "Vídeo enviado e salvo com sucesso.";
+
+        await carregarVideos();
+      } catch (erro) {
+        console.error(erro);
+        uploadMsg.textContent = "Erro ao enviar: " + erro.message;
+      }
+    });
+
+    async function carregarVideos() {
+      listaVideos.innerHTML = '<p class="vazio">Carregando vídeos...</p>';
+
+      const { data, error } = await supabaseClient
+        .from("videos")
+        .select("*")
+        .order("id", { ascending: false });
+
+      if (error) {
+        console.error(error);
+        listaVideos.innerHTML = '<p class="vazio">Erro ao carregar vídeos.</p>';
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        listaVideos.innerHTML = '<p class="vazio">Nenhum vídeo adicionado ainda.</p>';
+        return;
+      }
+
+      let html = "";
+
+      data.forEach(function (video) {
+        const botaoExcluir = usuarioAdmin
+          ? `
+            <div class="acoes">
+              <button class="btn-excluir" onclick="excluirVideo(${video.id}, '${escapeJs(video.caminho_arquivo || "")}')">
+                Excluir
+              </button>
+            </div>
+          `
+          : "";
+
+        html += `
+          <div class="video-card">
+            <div class="video-thumb" id="thumb-${video.id}" onclick="togglePlay(${video.id})">
+              <video id="video-${video.id}" preload="metadata" controls>
+                <source src="${escapeHtml(video.url_video || "")}" type="video/mp4">
+                Seu navegador não suporta vídeo.
+              </video>
+
+              <div class="video-overlay">
+                <div class="play-circle">
+                  <div class="play-triangle"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="video-info">
+              <h4>${escapeHtml(video.titulo || "Sem título")}</h4>
+              <p>${escapeHtml(video.descricao || "Sem descrição")}</p>
+              ${botaoExcluir}
+            </div>
+          </div>
+        `;
+      });
+
+      listaVideos.innerHTML = html;
+      configurarEventosVideos();
+    }
+
+    async function excluirVideo(id, caminhoArquivo) {
+      if (!usuarioAdmin) {
+        alert("Apenas o administrador pode excluir vídeos.");
+        return;
+      }
+
+      const confirmar = window.confirm("Deseja realmente excluir este vídeo?");
+      if (!confirmar) return;
+
+      try {
+        if (caminhoArquivo) {
+          const { error: storageError } = await supabaseClient.storage
+            .from("video")
+            .remove([caminhoArquivo]);
+
+          if (storageError) {
+            throw storageError;
+          }
+        }
+
+        const { error: deleteError } = await supabaseClient
+          .from("videos")
+          .delete()
+          .eq("id", id);
+
+        if (deleteError) {
+          throw deleteError;
+        }
+
+        await carregarVideos();
+      } catch (erro) {
+        console.error(erro);
+        alert("Erro ao excluir: " + erro.message);
+      }
+    }
+
+    function togglePlay(id) {
+      const thumb = document.getElementById("thumb-" + id);
+      const video = document.getElementById("video-" + id);
+
+      if (!thumb || !video) return;
+
+      const jaEstaTocando = thumb.classList.contains("playing");
+
+      pausarTodos();
+
+      if (!jaEstaTocando) {
+        thumb.classList.add("playing");
+        video.play().catch(function (erro) {
+          console.error("Erro ao reproduzir vídeo:", erro);
+        });
+      }
+    }
+
+    function pausarTodos() {
+      const thumbs = document.querySelectorAll(".video-thumb");
+      const todosVideos = document.querySelectorAll(".video-thumb video");
+
+      thumbs.forEach(function (thumb) {
+        thumb.classList.remove("playing");
+      });
+
+      todosVideos.forEach(function (video) {
+        video.pause();
+      });
+    }
+
+    function configurarEventosVideos() {
+      const todosVideos = document.querySelectorAll(".video-thumb video");
+
+      todosVideos.forEach(function (video) {
+        video.addEventListener("pause", function () {
+          const thumb = video.closest(".video-thumb");
+          if (thumb) {
+            thumb.classList.remove("playing");
+          }
+        });
+
+        video.addEventListener("ended", function () {
+          const thumb = video.closest(".video-thumb");
+          if (thumb) {
+            thumb.classList.remove("playing");
+            video.currentTime = 0;
+          }
+        });
+      });
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text == null ? "" : String(text);
+      return div.innerHTML;
+    }
+
+    function escapeJs(text) {
+      return String(text == null ? "" : text)
+        .replace(/\\/g, "\\\\")
+        .replace(/'/g, "\\'")
+        .replace(/"/g, '&quot;');
+    }
+
+    window.excluirVideo = excluirVideo;
+    window.togglePlay = togglePlay;
+
+    (async function iniciarPagina() {
+      const ok = await verificarSessao();
+      if (!ok) return;
+
+      await verificarAdmin();
+      await carregarVideos();
+    })();
+  </script>
+</body>
+</html>

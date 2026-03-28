@@ -1,0 +1,1502 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat Geral da Plataforma</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100%;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    .pagina-chat {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topo {
+      background: linear-gradient(135deg, #1d4ed8, #1e3a8a);
+      padding: 20px 20px;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .topo h1 {
+      font-size: 30px;
+      margin-bottom: 0;
+    }
+
+    .btn-fullscreen {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.25);
+      background: rgba(255,255,255,0.08);
+      color: #ffffff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: 0.2s ease;
+      padding: 0;
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .btn-fullscreen:hover {
+      background: rgba(255,255,255,0.18);
+      transform: translateY(-50%) scale(1.04);
+    }
+
+    .container {
+      max-width: 1400px;
+      width: 100%;
+      margin: 14px auto 0;
+      padding: 0 16px 14px;
+      flex: 1;
+      min-height: 0;
+      display: flex;
+    }
+
+    .layout-chat {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 14px;
+      min-height: 0;
+    }
+
+    .card {
+      background: #111827;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      min-height: 0;
+    }
+
+    .sidebar-online {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .sidebar-online h3 {
+      font-size: 24px;
+      margin-bottom: 14px;
+    }
+
+    .online-topo {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .contador-online {
+      background: #1d4ed8;
+      color: #fff;
+      min-width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .lista-online {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      background: #08101d;
+      border: 1px solid #243244;
+      border-radius: 14px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .online-item {
+      background: #111827;
+      border: 1px solid #223047;
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .online-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.25);
+    }
+
+    .online-dot.verde {
+      background: #22c55e;
+      box-shadow: 0 0 10px rgba(34, 197, 94, 0.45);
+    }
+
+    .online-dot.vermelho {
+      background: #ef4444;
+      box-shadow: 0 0 10px rgba(239, 68, 68, 0.45);
+    }
+
+    .online-item-info {
+      min-width: 0;
+    }
+
+    .online-item strong {
+      display: block;
+      color: #60a5fa;
+      font-size: 14px;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
+
+    .online-item span {
+      display: block;
+      color: #cbd5e1;
+      font-size: 13px;
+    }
+
+    .online-vazio {
+      color: #94a3b8;
+      font-size: 14px;
+      text-align: center;
+      padding: 20px 10px;
+    }
+
+    .status-lateral {
+      background: #08101d;
+      border: 1px solid #243244;
+      border-radius: 14px;
+      padding: 12px;
+      display: grid;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .status-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .status-texto {
+      color: #cbd5e1;
+      font-size: 14px;
+    }
+
+    .status-texto strong {
+      color: #ffffff;
+    }
+
+    .btn-sair {
+      background: #dc2626;
+      color: #ffffff;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    .btn-sair:hover {
+      opacity: 0.95;
+    }
+
+    .main-chat {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .top-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+      flex-shrink: 0;
+    }
+
+    .top-actions h2 {
+      font-size: 34px;
+    }
+
+    .btn-voltar {
+      display: inline-block;
+      text-decoration: none;
+      background: #2563eb;
+      color: #ffffff;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-weight: 700;
+    }
+
+    .area-convite-privado,
+    .area-aceite-privado {
+      background: #111827;
+      border: 1px solid #2f4f75;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .area-convite-privado strong,
+    .area-aceite-privado strong {
+      display: block;
+      color: #60a5fa;
+      margin-bottom: 8px;
+      font-size: 15px;
+    }
+
+    .area-convite-privado p,
+    .area-aceite-privado p {
+      color: #e5e7eb;
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+
+    .area-convite-acoes,
+    .area-aceite-acoes {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn-aceitar-convite {
+      background: #16a34a;
+      color: #fff;
+    }
+
+    .btn-recusar-convite {
+      background: #dc2626;
+      color: #fff;
+    }
+
+    .btn-entrar-privado {
+      background: #2563eb;
+      color: #fff;
+    }
+
+    .chat-mensagens {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      background: #08101d;
+      border: 1px solid #243244;
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .chat-item {
+      background: #111827;
+      border: 1px solid #223047;
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+    }
+
+    .chat-item.off {
+      border-style: dashed;
+      background: #0e1628;
+    }
+
+    .chat-item-esquerda {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .chat-item strong {
+      display: block;
+      color: #60a5fa;
+      margin-bottom: 6px;
+      font-size: 14px;
+      text-transform: uppercase;
+    }
+
+    .chat-item.off strong {
+      color: #f59e0b;
+    }
+
+    .chat-item span {
+      display: block;
+      color: #e5e7eb;
+      line-height: 1.5;
+      font-size: 14px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .chat-item small {
+      display: block;
+      color: #94a3b8;
+      margin-top: 8px;
+      font-size: 12px;
+    }
+
+    .chat-acoes {
+      flex-shrink: 0;
+      display: flex;
+      align-items: flex-start;
+    }
+
+    .btn-privado {
+      background: transparent;
+      border: 1px solid #2f4f75;
+      color: #cbd5e1;
+      padding: 10px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 700;
+      transition: 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .btn-privado:hover {
+      background: #1d4ed8;
+      border-color: #1d4ed8;
+      color: #ffffff;
+    }
+
+    .chat-form {
+      display: grid;
+      gap: 10px;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .campos-fake {
+      position: absolute;
+      left: -99999px;
+      top: -99999px;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .campos-fake input,
+    .campos-fake textarea {
+      width: 1px !important;
+      height: 1px !important;
+      min-height: 1px !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      border: 0 !important;
+    }
+
+    .linha-tripla {
+      display: grid;
+      grid-template-columns: 1fr 220px 1fr;
+      gap: 12px;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid #334155;
+      background: #0b1220;
+      color: #ffffff;
+      outline: none;
+      font-size: 15px;
+    }
+
+    textarea {
+      min-height: 70px;
+      height: 70px;
+      resize: none;
+    }
+
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus,
+    input:-webkit-autofill:active,
+    select:-webkit-autofill,
+    select:-webkit-autofill:hover,
+    select:-webkit-autofill:focus,
+    select:-webkit-autofill:active,
+    textarea:-webkit-autofill,
+    textarea:-webkit-autofill:hover,
+    textarea:-webkit-autofill:focus,
+    textarea:-webkit-autofill:active {
+      -webkit-box-shadow: 0 0 0 1000px #0b1220 inset !important;
+      -webkit-text-fill-color: #ffffff !important;
+      caret-color: #ffffff !important;
+      border: 1px solid #334155 !important;
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 12px 18px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: 0.2s;
+      background: #2563eb;
+      color: #ffffff;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      opacity: 0.95;
+    }
+
+    .modal-privado {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 6, 23, 0.78);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 99999;
+      padding: 20px;
+    }
+
+    .modal-privado.ativo {
+      display: flex;
+    }
+
+    .modal-privado-box {
+      width: 100%;
+      max-width: 420px;
+      background: #0b1220;
+      border: 1px solid #29406b;
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: 0 20px 50px rgba(0,0,0,.45);
+    }
+
+    .modal-privado-box h3 {
+      font-size: 24px;
+      margin-bottom: 10px;
+      color: #ffffff;
+    }
+
+    .modal-privado-box p {
+      color: #cbd5e1;
+      line-height: 1.5;
+      margin-bottom: 18px;
+    }
+
+    .modal-privado-acoes {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .btn-cancelar-privado {
+      background: #1e293b;
+      color: #ffffff;
+    }
+
+    .btn-confirmar-privado {
+      background: #2563eb;
+      color: #ffffff;
+    }
+
+    .msg {
+      margin-top: 4px;
+      color: #93c5fd;
+      word-break: break-word;
+      flex-shrink: 0;
+    }
+
+    @media (max-width: 1100px) {
+      .layout-chat {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar-online {
+        max-height: 320px;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .linha-tripla {
+        grid-template-columns: 1fr 180px 1fr;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .linha-tripla {
+        grid-template-columns: 1fr;
+      }
+
+      .chat-item {
+        flex-direction: column;
+      }
+
+      .chat-acoes {
+        width: 100%;
+      }
+
+      .btn-privado {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .topo h1 {
+        font-size: 24px;
+      }
+
+      .top-actions h2,
+      .sidebar-online h3 {
+        font-size: 22px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="pagina-chat" id="paginaChat">
+    <header class="topo">
+      <h1>Chat Geral</h1>
+      <button class="btn-fullscreen" id="btnFullscreen" title="Tela cheia" aria-label="Tela cheia">⛶</button>
+    </header>
+
+    <main class="container">
+      <div class="layout-chat">
+        <aside class="card sidebar-online">
+          <div class="online-topo">
+            <h3>Online</h3>
+            <div class="contador-online" id="contadorOnline">0</div>
+          </div>
+
+          <div class="lista-online" id="listaOnline">
+            <div class="online-vazio">Ninguém online no momento.</div>
+          </div>
+
+          <div class="status-lateral">
+            <div class="status-info">
+              <div class="online-dot vermelho" id="statusDot"></div>
+              <div class="status-texto" id="statusTexto">
+                Status: <strong>Offline</strong>
+              </div>
+            </div>
+
+            <button class="btn-sair" id="btnSair" type="button">Sair</button>
+          </div>
+        </aside>
+
+        <section class="card main-chat">
+          <div class="top-actions">
+            <h2>Comunidade</h2>
+            <a href="index.html" class="btn-voltar">Voltar para vídeos</a>
+          </div>
+
+          <div id="areaAceitesPrivados"></div>
+          <div id="areaConvitesPrivados"></div>
+          <div id="chatMensagens" class="chat-mensagens"></div>
+
+          <div class="chat-form" autocomplete="off">
+            <div class="campos-fake" aria-hidden="true">
+              <input type="text" tabindex="-1" autocomplete="username" />
+              <input type="password" tabindex="-1" autocomplete="current-password" />
+              <input type="text" tabindex="-1" autocomplete="address-level2" />
+              <textarea tabindex="-1" autocomplete="off"></textarea>
+            </div>
+
+            <div class="linha-tripla">
+              <input
+                type="text"
+                id="chatNome"
+                placeholder="Seu nome"
+                autocomplete="off"
+                autocapitalize="off"
+                autocorrect="off"
+                spellcheck="false"
+                list=""
+                readonly
+                data-form-type="other"
+                data-lpignore="true"
+                data-1p-ignore="true"
+              />
+
+              <select
+                id="chatEstado"
+                autocomplete="off"
+                data-form-type="other"
+                data-lpignore="true"
+                data-1p-ignore="true"
+              >
+                <option value="">Selecione o estado</option>
+                <option value="AC">AC</option>
+                <option value="AL">AL</option>
+                <option value="AP">AP</option>
+                <option value="AM">AM</option>
+                <option value="BA">BA</option>
+                <option value="CE">CE</option>
+                <option value="DF">DF</option>
+                <option value="ES">ES</option>
+                <option value="GO">GO</option>
+                <option value="MA">MA</option>
+                <option value="MT">MT</option>
+                <option value="MS">MS</option>
+                <option value="MG">MG</option>
+                <option value="PA">PA</option>
+                <option value="PB">PB</option>
+                <option value="PR">PR</option>
+                <option value="PE">PE</option>
+                <option value="PI">PI</option>
+                <option value="RJ">RJ</option>
+                <option value="RN">RN</option>
+                <option value="RS">RS</option>
+                <option value="RO">RO</option>
+                <option value="RR">RR</option>
+                <option value="SC">SC</option>
+                <option value="SP">SP</option>
+                <option value="SE">SE</option>
+                <option value="TO">TO</option>
+              </select>
+
+              <input
+                type="text"
+                id="chatCidade"
+                placeholder="Sua cidade"
+                autocomplete="off"
+                autocapitalize="off"
+                autocorrect="off"
+                spellcheck="false"
+                list=""
+                readonly
+                data-form-type="other"
+                data-lpignore="true"
+                data-1p-ignore="true"
+              />
+            </div>
+
+            <textarea
+              id="chatTexto"
+              placeholder="Digite sua mensagem"
+              autocomplete="off"
+              autocapitalize="sentences"
+              autocorrect="off"
+              spellcheck="false"
+              readonly
+              data-form-type="other"
+              data-lpignore="true"
+              data-1p-ignore="true"
+            ></textarea>
+
+            <button id="btnEnviarMensagem" type="button">Enviar mensagem</button>
+          </div>
+
+          <p id="chatMsg" class="msg"></p>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-privado" id="modalPrivado">
+    <div class="modal-privado-box">
+      <h3>Convite privado</h3>
+      <p id="textoConvitePrivado">Deseja convidar esta pessoa para o privado?</p>
+
+      <div class="modal-privado-acoes">
+        <button type="button" class="btn-cancelar-privado" id="btnCancelarPrivado">Cancelar</button>
+        <button type="button" class="btn-confirmar-privado" id="btnConfirmarPrivado">Enviar convite</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+    const SUPABASE_URL = "https://wpgmlaftkosunysjozqj.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_oSoYCmoXNFkisbRTJNs3GA_NXBsJAXD";
+
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        storage: window.sessionStorage,
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      }
+    });
+
+    const chatMensagens = document.getElementById("chatMensagens");
+    const chatNome = document.getElementById("chatNome");
+    const chatEstado = document.getElementById("chatEstado");
+    const chatCidade = document.getElementById("chatCidade");
+    const chatTexto = document.getElementById("chatTexto");
+    const btnEnviarMensagem = document.getElementById("btnEnviarMensagem");
+    const chatMsg = document.getElementById("chatMsg");
+    const btnFullscreen = document.getElementById("btnFullscreen");
+    const paginaChat = document.getElementById("paginaChat");
+    const listaOnline = document.getElementById("listaOnline");
+    const contadorOnline = document.getElementById("contadorOnline");
+    const statusDot = document.getElementById("statusDot");
+    const statusTexto = document.getElementById("statusTexto");
+    const btnSair = document.getElementById("btnSair");
+    const areaConvitesPrivados = document.getElementById("areaConvitesPrivados");
+    const areaAceitesPrivados = document.getElementById("areaAceitesPrivados");
+
+    const modalPrivado = document.getElementById("modalPrivado");
+    const textoConvitePrivado = document.getElementById("textoConvitePrivado");
+    const btnCancelarPrivado = document.getElementById("btnCancelarPrivado");
+    const btnConfirmarPrivado = document.getElementById("btnConfirmarPrivado");
+
+    const SESSION_ID = "sessao_" + Math.random().toString(36).slice(2) + Date.now();
+    const INICIO_SESSAO_ISO = new Date().toISOString();
+    const SUFIXO_CAMPOS = Math.random().toString(36).slice(2, 10);
+
+    let estouOnline = false;
+    let bloqueadoOffline = false;
+    let nomePrivadoAtual = "";
+    const assinaturasOcultas = new Set();
+
+    chatNome.name = "chat_nome_" + SUFIXO_CAMPOS;
+    chatEstado.name = "chat_estado_" + SUFIXO_CAMPOS;
+    chatCidade.name = "chat_cidade_" + SUFIXO_CAMPOS;
+    chatTexto.name = "chat_texto_" + SUFIXO_CAMPOS;
+
+    function aplicarAtributosFortes(campo) {
+      if (!campo) return;
+
+      campo.setAttribute("autocomplete", "off");
+      campo.setAttribute("data-form-type", "other");
+      campo.setAttribute("data-lpignore", "true");
+      campo.setAttribute("data-1p-ignore", "true");
+
+      if (campo.tagName === "INPUT" || campo.tagName === "TEXTAREA") {
+        campo.setAttribute("autocorrect", "off");
+        campo.setAttribute("spellcheck", "false");
+      }
+
+      if (campo.tagName === "INPUT") {
+        campo.setAttribute("autocapitalize", "off");
+        campo.setAttribute("list", "");
+      }
+    }
+
+    function prepararLiberacaoCampo(campo) {
+      if (!campo) return;
+
+      campo.setAttribute("readonly", "readonly");
+
+      function liberarCampo() {
+        campo.removeAttribute("readonly");
+      }
+
+      campo.addEventListener("focus", liberarCampo);
+      campo.addEventListener("mousedown", liberarCampo);
+      campo.addEventListener("touchstart", liberarCampo, { passive: true });
+      campo.addEventListener("pointerdown", liberarCampo, { passive: true });
+    }
+
+    function bloquearCamposTextoNovamente() {
+      chatNome.setAttribute("readonly", "readonly");
+      chatCidade.setAttribute("readonly", "readonly");
+      chatTexto.setAttribute("readonly", "readonly");
+    }
+
+    function limparCamposFormulario() {
+      chatNome.value = "";
+      chatEstado.value = "";
+      chatCidade.value = "";
+      chatTexto.value = "";
+      bloquearCamposTextoNovamente();
+    }
+
+    aplicarAtributosFortes(chatNome);
+    aplicarAtributosFortes(chatEstado);
+    aplicarAtributosFortes(chatCidade);
+    aplicarAtributosFortes(chatTexto);
+
+    prepararLiberacaoCampo(chatNome);
+    prepararLiberacaoCampo(chatCidade);
+    prepararLiberacaoCampo(chatTexto);
+
+    limparCamposFormulario();
+
+    setTimeout(function() {
+      limparCamposFormulario();
+    }, 100);
+
+    setTimeout(function() {
+      limparCamposFormulario();
+    }, 500);
+
+    window.addEventListener("pageshow", function() {
+      limparCamposFormulario();
+      placeholderChat();
+    });
+
+    function placeholderChat() {
+      chatMensagens.innerHTML = `
+        <div class="online-vazio">
+          Preencha nome, estado e cidade e envie sua primeira mensagem para entrar no chat.
+        </div>
+      `;
+    }
+
+    function criarAssinatura(nome, cidade, estado) {
+      return [
+        (nome || "").trim().toUpperCase(),
+        (cidade || "").trim().toUpperCase(),
+        (estado || "").trim().toUpperCase()
+      ].join("|");
+    }
+
+    function obterAssinaturasOnline() {
+      const estadoPresenca = canalPresenca.presenceState();
+      const set = new Set();
+
+      Object.keys(estadoPresenca).forEach(function(key) {
+        estadoPresenca[key].forEach(function(item) {
+          const assinatura = criarAssinatura(item.nome, item.cidade, item.estado);
+
+          if (!assinatura.replace(/\|/g, "")) return;
+          if (assinaturasOcultas.has(assinatura)) return;
+
+          set.add(assinatura);
+        });
+      });
+
+      return set;
+    }
+
+    function podeExibirChat() {
+      return (
+        estouOnline &&
+        chatNome.value.trim() &&
+        chatEstado.value.trim() &&
+        chatCidade.value.trim()
+      );
+    }
+
+    const canalPresenca = supabaseClient.channel("presenca-chat-geral", {
+      config: {
+        presence: {
+          key: SESSION_ID
+        }
+      }
+    });
+
+    canalPresenca
+      .on("presence", { event: "sync" }, function() {
+        renderizarOnline();
+        carregarMensagens();
+      })
+      .on("presence", { event: "join" }, function() {
+        renderizarOnline();
+        carregarMensagens();
+      })
+      .on("presence", { event: "leave" }, function() {
+        renderizarOnline();
+        carregarMensagens();
+      })
+      .subscribe(async function(status) {
+        if (status === "SUBSCRIBED" && chatNome.value.trim() && !bloqueadoOffline) {
+          await entrarOnline();
+        }
+      });
+
+    btnFullscreen.addEventListener("click", alternarTelaCheia);
+    btnSair.addEventListener("click", sairDoOnline);
+
+    btnCancelarPrivado.addEventListener("click", fecharModalPrivado);
+
+    btnConfirmarPrivado.addEventListener("click", async function() {
+      const deNome = chatNome.value.trim();
+      const paraNome = (nomePrivadoAtual || "").trim();
+
+      if (!deNome) {
+        chatMsg.textContent = "Informe seu nome antes de enviar convite privado.";
+        fecharModalPrivado();
+        return;
+      }
+
+      if (!paraNome) {
+        chatMsg.textContent = "Não foi possível identificar quem vai receber o convite.";
+        fecharModalPrivado();
+        return;
+      }
+
+      if (deNome.toUpperCase() === paraNome.toUpperCase()) {
+        chatMsg.textContent = "Você não pode enviar convite para você mesmo.";
+        fecharModalPrivado();
+        return;
+      }
+
+      try {
+        chatMsg.textContent = "Enviando convite privado...";
+
+        const { error } = await supabaseClient
+          .from("convites_privados")
+          .insert([
+            {
+              de_nome: deNome,
+              para_nome: paraNome,
+              status: "pendente"
+            }
+          ]);
+
+        if (error) throw error;
+
+        chatMsg.textContent = "Convite privado enviado para " + paraNome + ".";
+        fecharModalPrivado();
+      } catch (erro) {
+        console.error(erro);
+        chatMsg.textContent = "Erro ao enviar convite: " + erro.message;
+        fecharModalPrivado();
+      }
+    });
+
+    modalPrivado.addEventListener("click", function(e) {
+      if (e.target === modalPrivado) {
+        fecharModalPrivado();
+      }
+    });
+
+    btnEnviarMensagem.addEventListener("click", async function() {
+      const nome = chatNome.value.trim();
+      const estado = chatEstado.value.trim();
+      const cidade = chatCidade.value.trim();
+      const mensagem = chatTexto.value.trim();
+
+      if (!nome) {
+        chatMsg.textContent = "Informe seu nome.";
+        return;
+      }
+
+      if (!estado) {
+        chatMsg.textContent = "Selecione o estado.";
+        return;
+      }
+
+      if (!cidade) {
+        chatMsg.textContent = "Informe a cidade.";
+        return;
+      }
+
+      if (!mensagem) {
+        chatMsg.textContent = "Digite sua mensagem.";
+        return;
+      }
+
+      try {
+        const minhaAssinatura = criarAssinatura(nome, cidade, estado);
+        assinaturasOcultas.delete(minhaAssinatura);
+
+        if (bloqueadoOffline) {
+          bloqueadoOffline = false;
+        }
+
+        if (!estouOnline) {
+          await entrarOnline();
+        } else {
+          await atualizarPresenca();
+        }
+
+        chatMsg.textContent = "Enviando mensagem...";
+
+        const { error } = await supabaseClient
+          .from("mensagens_chat")
+          .insert([
+            {
+              nome: nome,
+              estado: estado,
+              cidade: cidade,
+              mensagem: mensagem
+            }
+          ]);
+
+        if (error) throw error;
+
+        chatTexto.value = "";
+        chatTexto.setAttribute("readonly", "readonly");
+        chatMsg.textContent = "Mensagem enviada com sucesso.";
+        carregarMensagens();
+        carregarConvitesPrivados();
+        carregarAceitesPrivados();
+      } catch (erro) {
+        console.error(erro);
+        chatMsg.textContent = "Erro ao enviar: " + erro.message;
+      }
+    });
+
+    function alternarTelaCheia() {
+      if (!document.fullscreenElement) {
+        paginaChat.requestFullscreen().catch(function(err) {
+          alert("Não foi possível ativar tela cheia.");
+          console.error(err);
+        });
+      } else {
+        document.exitFullscreen();
+      }
+    }
+
+    async function entrarOnline() {
+      const nome = chatNome.value.trim();
+      if (!nome) return;
+
+      const estado = chatEstado.value.trim();
+      const cidade = chatCidade.value.trim();
+
+      const status = await canalPresenca.track({
+        session_id: SESSION_ID,
+        nome: nome,
+        estado: estado,
+        cidade: cidade,
+        online_em: new Date().toISOString()
+      });
+
+      if (status === "ok") {
+        estouOnline = true;
+        bloqueadoOffline = false;
+        atualizarMeuStatus();
+        renderizarOnline();
+        carregarMensagens();
+      }
+    }
+
+    async function atualizarPresenca() {
+      if (!estouOnline) return;
+
+      const nome = chatNome.value.trim();
+      if (!nome) return;
+
+      await canalPresenca.track({
+        session_id: SESSION_ID,
+        nome: nome,
+        estado: chatEstado.value.trim(),
+        cidade: chatCidade.value.trim(),
+        online_em: new Date().toISOString()
+      });
+
+      atualizarMeuStatus();
+      renderizarOnline();
+      carregarMensagens();
+    }
+
+    async function sairDoOnline() {
+      const nomeAtual = chatNome.value.trim() || "Usuário";
+      const estadoAtual = chatEstado.value.trim();
+      const cidadeAtual = chatCidade.value.trim();
+      const minhaAssinatura = criarAssinatura(nomeAtual, cidadeAtual, estadoAtual);
+
+      try {
+        await canalPresenca.untrack();
+      } catch (erro) {
+        console.error(erro);
+      }
+
+      assinaturasOcultas.add(minhaAssinatura);
+      estouOnline = false;
+      bloqueadoOffline = true;
+
+      atualizarMeuStatus();
+      renderizarOnline();
+      chatMsg.textContent = nomeAtual + " saiu da sala.";
+      adicionarMensagemOff(nomeAtual + " saiu da sala.");
+
+      chatNome.value = "";
+      chatEstado.value = "";
+      chatCidade.value = "";
+      chatTexto.value = "";
+      bloquearCamposTextoNovamente();
+      areaConvitesPrivados.innerHTML = "";
+      areaAceitesPrivados.innerHTML = "";
+      placeholderChat();
+    }
+
+    function atualizarMeuStatus() {
+      if (estouOnline) {
+        statusDot.classList.remove("vermelho");
+        statusDot.classList.add("verde");
+        statusTexto.innerHTML = 'Status: <strong>Online</strong>';
+      } else {
+        statusDot.classList.remove("verde");
+        statusDot.classList.add("vermelho");
+        statusTexto.innerHTML = 'Status: <strong>Offline</strong>';
+      }
+    }
+
+    async function carregarMensagens() {
+      if (!podeExibirChat()) {
+        placeholderChat();
+        return;
+      }
+
+      const assinaturasOnline = obterAssinaturasOnline();
+
+      if (!assinaturasOnline.size) {
+        chatMensagens.innerHTML = '<div class="online-vazio">Nenhuma mensagem ativa no momento.</div>';
+        return;
+      }
+
+      const { data, error } = await supabaseClient
+        .from("mensagens_chat")
+        .select("*")
+        .gte("criado_em", INICIO_SESSAO_ISO)
+        .order("id", { ascending: true });
+
+      if (error) {
+        console.error(error);
+        chatMensagens.innerHTML = "<p>Nenhuma mensagem ainda.</p>";
+        return;
+      }
+
+      const filtradas = (data || []).filter(function(item) {
+        const assinatura = criarAssinatura(item.nome, item.cidade, item.estado);
+        return assinaturasOnline.has(assinatura);
+      });
+
+      renderizarMensagens(filtradas);
+    }
+
+    function renderizarMensagens(lista) {
+      if (!lista.length) {
+        chatMensagens.innerHTML = '<div class="online-vazio">Nenhuma mensagem ativa no momento.</div>';
+        return;
+      }
+
+      let html = "";
+
+      lista.forEach(function(item) {
+        const local = [item.cidade, item.estado].filter(Boolean).join("/");
+        html += `
+          <div class="chat-item">
+            <div class="chat-item-esquerda">
+              <strong>${escapeHtml(item.nome)}${local ? " • " + escapeHtml(local) : ""}</strong>
+              <span>${escapeHtml(item.mensagem)}</span>
+              <small>${formatarData(item.criado_em)}</small>
+            </div>
+
+            <div class="chat-acoes">
+              <button class="btn-privado" onclick="convidarPrivado('${escapeJs(item.nome)}')">
+                Convidar no privado
+              </button>
+            </div>
+          </div>
+        `;
+      });
+
+      chatMensagens.innerHTML = html;
+      chatMensagens.scrollTop = chatMensagens.scrollHeight;
+    }
+
+    function adicionarMensagemOff(texto) {
+      if (!podeExibirChat()) return;
+
+      const agora = new Date().toLocaleString("pt-BR");
+
+      const html = `
+        <div class="chat-item off">
+          <div class="chat-item-esquerda">
+            <strong>OFF</strong>
+            <span>${escapeHtml(texto)}</span>
+            <small>${agora}</small>
+          </div>
+        </div>
+      `;
+
+      chatMensagens.insertAdjacentHTML("beforeend", html);
+      chatMensagens.scrollTop = chatMensagens.scrollHeight;
+    }
+
+    function renderizarOnline() {
+      const estadoPresenca = canalPresenca.presenceState();
+      const mapa = new Map();
+
+      Object.keys(estadoPresenca).forEach(function(key) {
+        estadoPresenca[key].forEach(function(item) {
+          const assinatura = criarAssinatura(item.nome, item.cidade, item.estado);
+
+          if (!assinatura.replace(/\|/g, "")) return;
+          if (assinaturasOcultas.has(assinatura)) return;
+
+          if (!mapa.has(assinatura)) {
+            mapa.set(assinatura, item);
+          }
+        });
+      });
+
+      const pessoasUnicas = Array.from(mapa.values());
+
+      contadorOnline.textContent = String(pessoasUnicas.length);
+
+      if (!pessoasUnicas.length) {
+        listaOnline.innerHTML = '<div class="online-vazio">Ninguém online no momento.</div>';
+        return;
+      }
+
+      let html = "";
+
+      pessoasUnicas.forEach(function(pessoa) {
+        const local = [pessoa.cidade, pessoa.estado].filter(Boolean).join("/");
+        html += `
+          <div class="online-item">
+            <div class="online-dot verde"></div>
+            <div class="online-item-info">
+              <strong>${escapeHtml(pessoa.nome || "Visitante")}</strong>
+              <span>${escapeHtml(local || "Local não informado")}</span>
+            </div>
+          </div>
+        `;
+      });
+
+      listaOnline.innerHTML = html;
+    }
+
+    function convidarPrivado(nome) {
+      nomePrivadoAtual = nome || "";
+      textoConvitePrivado.textContent = "Deseja convidar " + nomePrivadoAtual + " para o privado?";
+      modalPrivado.classList.add("ativo");
+    }
+
+    function fecharModalPrivado() {
+      modalPrivado.classList.remove("ativo");
+      nomePrivadoAtual = "";
+    }
+
+    async function carregarConvitesPrivados() {
+      const meuNome = chatNome.value.trim();
+
+      if (!meuNome) {
+        areaConvitesPrivados.innerHTML = "";
+        return;
+      }
+
+      const { data, error } = await supabaseClient
+        .from("convites_privados")
+        .select("*")
+        .eq("para_nome", meuNome)
+        .eq("status", "pendente")
+        .order("id", { ascending: false });
+
+      if (error) {
+        console.error(error);
+        areaConvitesPrivados.innerHTML = "";
+        return;
+      }
+
+      if (!data || !data.length) {
+        areaConvitesPrivados.innerHTML = "";
+        return;
+      }
+
+      let html = "";
+
+      data.forEach(function(convite) {
+        html += `
+          <div class="area-convite-privado">
+            <strong>Convite privado</strong>
+            <p>${escapeHtml(convite.de_nome)} convidou você para conversar no privado.</p>
+            <div class="area-convite-acoes">
+              <button class="btn-aceitar-convite" onclick="aceitarConvitePrivado(${convite.id})">Aceitar</button>
+              <button class="btn-recusar-convite" onclick="recusarConvitePrivado(${convite.id})">Recusar</button>
+            </div>
+          </div>
+        `;
+      });
+
+      areaConvitesPrivados.innerHTML = html;
+    }
+
+    async function carregarAceitesPrivados() {
+      const meuNome = chatNome.value.trim();
+
+      if (!meuNome) {
+        areaAceitesPrivados.innerHTML = "";
+        return;
+      }
+
+      const { data, error } = await supabaseClient
+        .from("convites_privados")
+        .select("*")
+        .eq("de_nome", meuNome)
+        .eq("status", "aceito")
+        .order("id", { ascending: false });
+
+      if (error) {
+        console.error(error);
+        areaAceitesPrivados.innerHTML = "";
+        return;
+      }
+
+      if (!data || !data.length) {
+        areaAceitesPrivados.innerHTML = "";
+        return;
+      }
+
+      let html = "";
+
+      data.forEach(function(convite) {
+        const deCod = encodeURIComponent(convite.de_nome || "");
+        const paraCod = encodeURIComponent(convite.para_nome || "");
+
+        html += `
+          <div class="area-aceite-privado">
+            <strong>Convite aceito</strong>
+            <p>${escapeHtml(convite.para_nome)} aceitou seu convite privado.</p>
+            <div class="area-aceite-acoes">
+              <button class="btn-entrar-privado" onclick="window.location.href='privado.html?de=${deCod}&para=${paraCod}&atual=${deCod}'">
+                Entrar no privado
+              </button>
+            </div>
+          </div>
+        `;
+      });
+
+      areaAceitesPrivados.innerHTML = html;
+    }
+
+    async function aceitarConvitePrivado(id) {
+      const { data, error: erroBusca } = await supabaseClient
+        .from("convites_privados")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (erroBusca || !data) {
+        console.error(erroBusca);
+        chatMsg.textContent = "Erro ao localizar convite.";
+        return;
+      }
+
+      const { error } = await supabaseClient
+        .from("convites_privados")
+        .update({ status: "aceito" })
+        .eq("id", id);
+
+      if (error) {
+        console.error(error);
+        chatMsg.textContent = "Erro ao aceitar convite: " + error.message;
+        return;
+      }
+
+      const remetente = encodeURIComponent(data.de_nome || "");
+      const destinatario = encodeURIComponent(data.para_nome || "");
+      const atual = encodeURIComponent(data.para_nome || "");
+
+      window.location.href = `privado.html?de=${remetente}&para=${destinatario}&atual=${atual}`;
+    }
+
+    async function recusarConvitePrivado(id) {
+      const { error } = await supabaseClient
+        .from("convites_privados")
+        .update({ status: "recusado" })
+        .eq("id", id);
+
+      if (error) {
+        console.error(error);
+        chatMsg.textContent = "Erro ao recusar convite: " + error.message;
+        return;
+      }
+
+      chatMsg.textContent = "Convite privado recusado.";
+      carregarConvitesPrivados();
+      carregarAceitesPrivados();
+    }
+
+    function formatarData(dataIso) {
+      if (!dataIso) return "";
+      const data = new Date(dataIso);
+      return data.toLocaleString("pt-BR");
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function escapeJs(text) {
+      return String(text)
+        .replace(/\\/g, "\\\\")
+        .replace(/'/g, "\\'");
+    }
+
+    supabaseClient
+      .channel("mensagens-chat-geral")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "mensagens_chat"
+        },
+        function () {
+          carregarMensagens();
+        }
+      )
+      .subscribe();
+
+    window.addEventListener("beforeunload", async function() {
+      try {
+        await canalPresenca.untrack();
+      } catch (erro) {
+        console.error(erro);
+      }
+    });
+
+    placeholderChat();
+    carregarConvitesPrivados();
+    carregarAceitesPrivados();
+    atualizarMeuStatus();
+
+    setInterval(function() {
+      carregarConvitesPrivados();
+      carregarAceitesPrivados();
+      carregarMensagens();
+    }, 2000);
+
+    chatNome.addEventListener("input", function() {
+      carregarConvitesPrivados();
+      carregarAceitesPrivados();
+      carregarMensagens();
+    });
+  </script>
+</body>
+</html>
