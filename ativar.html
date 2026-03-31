@@ -152,11 +152,6 @@
     .msg.ok{ color:#86efac; }
     .msg.erro{ color:#fca5a5; }
 
-    .bloco-cadastro{
-      display:none;
-      margin-top:12px;
-    }
-
     .rodape{
       margin-top:20px;
       text-align:center;
@@ -177,35 +172,33 @@
   <div class="box">
     <h1>Ativar acesso</h1>
     <p class="sub">
-      Use este link para cadastrar seu e-mail e sua senha e liberar sua entrada na plataforma.
+      Digite o e-mail liberado para compra e cadastre sua senha para entrar na plataforma.
     </p>
 
-    <p id="msg" class="msg info">Validando seu link...</p>
-
-    <div id="blocoCadastro" class="bloco-cadastro">
-      <div class="campo">
-        <label for="emailCadastro">Cadastre seu e-mail</label>
-        <input type="email" id="emailCadastro" placeholder="Digite seu e-mail" />
-      </div>
-
-      <div class="campo">
-        <label for="senhaCadastro">Cadastre sua senha</label>
-        <div class="input-senha">
-          <input type="password" id="senhaCadastro" placeholder="Digite sua senha" />
-          <button type="button" class="btn-olho" id="btnOlhoSenha" aria-label="Mostrar senha" title="Mostrar senha">👁</button>
-        </div>
-      </div>
-
-      <div class="campo">
-        <label for="confirmarSenhaCadastro">Confirme sua senha</label>
-        <div class="input-senha">
-          <input type="password" id="confirmarSenhaCadastro" placeholder="Repita sua senha" />
-          <button type="button" class="btn-olho" id="btnOlhoConfirmar" aria-label="Mostrar confirmação de senha" title="Mostrar confirmação de senha">👁</button>
-        </div>
-      </div>
-
-      <button id="btnCadastrar">Ativar acesso</button>
+    <div class="campo">
+      <label for="emailCadastro">Seu e-mail</label>
+      <input type="email" id="emailCadastro" placeholder="Digite seu e-mail" />
     </div>
+
+    <div class="campo">
+      <label for="senhaCadastro">Cadastre sua senha</label>
+      <div class="input-senha">
+        <input type="password" id="senhaCadastro" placeholder="Digite sua senha" />
+        <button type="button" class="btn-olho" id="btnOlhoSenha" aria-label="Mostrar senha" title="Mostrar senha">👁</button>
+      </div>
+    </div>
+
+    <div class="campo">
+      <label for="confirmarSenhaCadastro">Confirme sua senha</label>
+      <div class="input-senha">
+        <input type="password" id="confirmarSenhaCadastro" placeholder="Repita sua senha" />
+        <button type="button" class="btn-olho" id="btnOlhoConfirmar" aria-label="Mostrar confirmação de senha" title="Mostrar confirmação de senha">👁</button>
+      </div>
+    </div>
+
+    <button id="btnCadastrar">Ativar acesso</button>
+
+    <p id="msg" class="msg info">Aguardando seu cadastro.</p>
 
     <div class="rodape">
       Já tem acesso? <a href="login.html">Ir para o login</a>
@@ -226,10 +219,6 @@
       }
     });
 
-    const params = new URLSearchParams(window.location.search);
-    const token = (params.get("token") || "").trim();
-
-    const blocoCadastro = document.getElementById("blocoCadastro");
     const emailCadastro = document.getElementById("emailCadastro");
     const senhaCadastro = document.getElementById("senhaCadastro");
     const confirmarSenhaCadastro = document.getElementById("confirmarSenhaCadastro");
@@ -238,7 +227,6 @@
     const btnCadastrar = document.getElementById("btnCadastrar");
     const msg = document.getElementById("msg");
 
-    let conviteAtual = null;
     let processando = false;
 
     function definirMensagem(texto, tipo) {
@@ -264,62 +252,21 @@
       }
     }
 
-    async function validarToken() {
-      if (!token) {
-        definirMensagem("Link inválido. Token não encontrado.", "erro");
-        return;
-      }
+    async function buscarLiberacaoPorEmail(email) {
+      const { data, error } = await supabaseClient
+        .from("itens_ativacao")
+        .select("id, email_comprador, usado, usado_em, expira_em, user_id, criado_em")
+        .eq("email_comprador", email)
+        .order("criado_em", { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-      try {
-        const { data, error } = await supabaseClient
-          .from("convites_ativacao")
-          .select("id, email_comprador, usado, expira_em")
-          .eq("token", token)
-          .maybeSingle();
-
-        if (error) {
-          console.error(error);
-          definirMensagem("Não foi possível validar o link: " + error.message, "erro");
-          return;
-        }
-
-        if (!data) {
-          definirMensagem("Este link não existe ou é inválido.", "erro");
-          return;
-        }
-
-        if (data.usado) {
-          definirMensagem("Este link já foi utilizado.", "erro");
-          return;
-        }
-
-        if (data.expira_em) {
-          const agora = new Date().getTime();
-          const expira = new Date(data.expira_em).getTime();
-
-          if (!isNaN(expira) && expira < agora) {
-            definirMensagem("Este link expirou. Solicite um novo acesso.", "erro");
-            return;
-          }
-        }
-
-        conviteAtual = data;
-        emailCadastro.value = data.email_comprador || "";
-        blocoCadastro.style.display = "block";
-        definirMensagem("Link validado. Agora cadastre seu e-mail e sua senha.", "ok");
-      } catch (erro) {
-        console.error(erro);
-        definirMensagem("Erro ao validar o link: " + erro.message, "erro");
-      }
+      if (error) throw error;
+      return data;
     }
 
     async function cadastrarConta() {
       if (processando) return;
-
-      if (!conviteAtual) {
-        definirMensagem("Convite não validado.", "erro");
-        return;
-      }
 
       const email = emailCadastro.value.trim().toLowerCase();
       const senha = senhaCadastro.value.trim();
@@ -358,9 +305,30 @@
 
       processando = true;
       btnCadastrar.disabled = true;
-      definirMensagem("Criando seu acesso...", "info");
+      definirMensagem("Validando seu e-mail...", "info");
 
       try {
+        const item = await buscarLiberacaoPorEmail(email);
+
+        if (!item) {
+          throw new Error("Este e-mail não está liberado para ativação.");
+        }
+
+        if (item.usado) {
+          throw new Error("Este e-mail já foi utilizado. Vá para o login.");
+        }
+
+        if (item.expira_em) {
+          const agora = new Date().getTime();
+          const expira = new Date(item.expira_em).getTime();
+
+          if (!isNaN(expira) && expira < agora) {
+            throw new Error("Este acesso expirou. Solicite um novo acesso.");
+          }
+        }
+
+        definirMensagem("Criando seu acesso...", "info");
+
         const { data, error } = await supabaseClient.auth.signUp({
           email: email,
           password: senha
@@ -372,15 +340,14 @@
 
         const userId = data && data.user ? data.user.id : null;
 
-        const { data: conviteAtualizado, error: updateError } = await supabaseClient
-          .from("convites_ativacao")
+        const { data: itemAtualizado, error: updateError } = await supabaseClient
+          .from("itens_ativacao")
           .update({
-            email_comprador: email,
             usado: true,
             usado_em: new Date().toISOString(),
             user_id: userId
           })
-          .eq("id", conviteAtual.id)
+          .eq("id", item.id)
           .eq("usado", false)
           .select("id")
           .maybeSingle();
@@ -389,8 +356,8 @@
           throw updateError;
         }
 
-        if (!conviteAtualizado) {
-          throw new Error("Este link já foi utilizado.");
+        if (!itemAtualizado) {
+          throw new Error("Este e-mail já foi utilizado.");
         }
 
         try {
@@ -420,7 +387,7 @@
 
     btnCadastrar.addEventListener("click", cadastrarConta);
 
-    confirmarSenhaCadastro.addEventListener("keydown", function(e) {
+    emailCadastro.addEventListener("keydown", function(e) {
       if (e.key === "Enter") {
         e.preventDefault();
         cadastrarConta();
@@ -434,14 +401,12 @@
       }
     });
 
-    emailCadastro.addEventListener("keydown", function(e) {
+    confirmarSenhaCadastro.addEventListener("keydown", function(e) {
       if (e.key === "Enter") {
         e.preventDefault();
         cadastrarConta();
       }
     });
-
-    validarToken();
   </script>
 </body>
 </html>
