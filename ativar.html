@@ -172,7 +172,7 @@
   <div class="box">
     <h1>Ativar acesso</h1>
     <p class="sub">
-      Digite o e-mail liberado para compra e cadastre sua senha para entrar na plataforma.
+      Digite seu e-mail e cadastre sua senha para acessar a plataforma.
     </p>
 
     <div class="campo">
@@ -252,17 +252,18 @@
       }
     }
 
-    async function buscarLiberacaoPorEmail(email) {
-      const { data, error } = await supabaseClient
-        .from("itens_ativacao")
-        .select("id, email_comprador, usado, usado_em, expira_em, user_id, criado_em")
-        .eq("email_comprador", email)
-        .order("criado_em", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+    function traduzirErro(error) {
+      const texto = (error && error.message ? error.message : "").toLowerCase();
 
-      if (error) throw error;
-      return data;
+      if (texto.includes("already registered") || texto.includes("already been registered")) {
+        return "Este e-mail já está cadastrado. Vá para o login.";
+      }
+
+      if (texto.includes("password")) {
+        return "Senha inválida. Use pelo menos 6 caracteres.";
+      }
+
+      return error && error.message ? error.message : "Não foi possível concluir o cadastro.";
     }
 
     async function cadastrarConta() {
@@ -305,59 +306,16 @@
 
       processando = true;
       btnCadastrar.disabled = true;
-      definirMensagem("Validando seu e-mail...", "info");
+      definirMensagem("Criando seu acesso...", "info");
 
       try {
-        const item = await buscarLiberacaoPorEmail(email);
-
-        if (!item) {
-          throw new Error("Este e-mail não está liberado para ativação.");
-        }
-
-        if (item.usado) {
-          throw new Error("Este e-mail já foi utilizado. Vá para o login.");
-        }
-
-        if (item.expira_em) {
-          const agora = new Date().getTime();
-          const expira = new Date(item.expira_em).getTime();
-
-          if (!isNaN(expira) && expira < agora) {
-            throw new Error("Este acesso expirou. Solicite um novo acesso.");
-          }
-        }
-
-        definirMensagem("Criando seu acesso...", "info");
-
-        const { data, error } = await supabaseClient.auth.signUp({
+        const { error } = await supabaseClient.auth.signUp({
           email: email,
           password: senha
         });
 
         if (error) {
           throw error;
-        }
-
-        const userId = data && data.user ? data.user.id : null;
-
-        const { data: itemAtualizado, error: updateError } = await supabaseClient
-          .from("itens_ativacao")
-          .update({
-            usado: true,
-            usado_em: new Date().toISOString(),
-            user_id: userId
-          })
-          .eq("id", item.id)
-          .eq("usado", false)
-          .select("id")
-          .maybeSingle();
-
-        if (updateError) {
-          throw updateError;
-        }
-
-        if (!itemAtualizado) {
-          throw new Error("Este e-mail já foi utilizado.");
         }
 
         try {
@@ -368,9 +326,10 @@
 
         definirMensagem("Conta criada com sucesso. Redirecionando para o login...", "ok");
         setTimeout(irParaLogin, 2200);
+
       } catch (erro) {
         console.error(erro);
-        definirMensagem("Erro ao ativar acesso: " + erro.message, "erro");
+        definirMensagem("Erro ao ativar acesso: " + traduzirErro(erro), "erro");
       } finally {
         processando = false;
         btnCadastrar.disabled = false;
