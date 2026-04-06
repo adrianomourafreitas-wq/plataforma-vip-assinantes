@@ -284,6 +284,7 @@
       display:flex;
       align-items:center;
       justify-content:center;
+      padding:0 70px;
     }
 
     .modal-conteudo img{
@@ -309,6 +310,47 @@
       font-weight:700;
       cursor:pointer;
       box-shadow:0 10px 20px rgba(0,0,0,0.3);
+      z-index:3;
+      padding:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .btn-nav-modal{
+      position:absolute;
+      top:50%;
+      transform:translateY(-50%);
+      width:52px;
+      height:52px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,0.20);
+      background:rgba(15,23,42,0.82);
+      color:#ffffff;
+      font-size:30px;
+      font-weight:700;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      z-index:2;
+      padding:0;
+      box-shadow:0 10px 25px rgba(0,0,0,0.35);
+      backdrop-filter:blur(4px);
+    }
+
+    .btn-nav-modal:hover{
+      background:rgba(37,99,235,0.92);
+      transform:translateY(-50%) scale(1.05);
+      opacity:1;
+    }
+
+    .btn-nav-modal.esquerda{
+      left:6px;
+    }
+
+    .btn-nav-modal.direita{
+      right:6px;
     }
 
     #areaAdminFotos{
@@ -335,6 +377,24 @@
         font-size:22px;
       }
       .foto-wrap{ height:230px; }
+
+      .modal-conteudo{
+        padding:0 48px;
+      }
+
+      .btn-nav-modal{
+        width:44px;
+        height:44px;
+        font-size:26px;
+      }
+
+      .btn-nav-modal.esquerda{
+        left:0;
+      }
+
+      .btn-nav-modal.direita{
+        right:0;
+      }
     }
   </style>
 </head>
@@ -382,6 +442,8 @@
 
   <div class="modal-foto" id="modalFoto">
     <div class="modal-conteudo">
+      <button class="btn-nav-modal esquerda" id="btnFotoAnterior" type="button" aria-label="Foto anterior">‹</button>
+      <button class="btn-nav-modal direita" id="btnFotoProxima" type="button" aria-label="Próxima foto">›</button>
       <button class="btn-fechar-modal" id="btnFecharModal" type="button">×</button>
       <img id="imgModal" src="" alt="Foto ampliada" />
     </div>
@@ -403,12 +465,16 @@
 
     const EMAIL_ADMIN = "adriano_freitas1980@outlook.com";
     let usuarioAdmin = false;
+    let fotosCache = [];
+    let fotoAtualIndex = -1;
 
     const btnFullscreen = document.getElementById("btnFullscreen");
     const galeriaGrid = document.getElementById("galeriaGrid");
     const modalFoto = document.getElementById("modalFoto");
     const imgModal = document.getElementById("imgModal");
     const btnFecharModal = document.getElementById("btnFecharModal");
+    const btnFotoAnterior = document.getElementById("btnFotoAnterior");
+    const btnFotoProxima = document.getElementById("btnFotoProxima");
 
     const areaAdminFotos = document.getElementById("areaAdminFotos");
     const tituloFoto = document.getElementById("tituloFoto");
@@ -456,16 +522,62 @@
       }
     }
 
+    function atualizarVisibilidadeSetas() {
+      const mostrar = modalFoto.classList.contains("ativo") && fotosCache.length > 1 && fotoAtualIndex >= 0;
+      btnFotoAnterior.style.display = mostrar ? "flex" : "none";
+      btnFotoProxima.style.display = mostrar ? "flex" : "none";
+    }
+
+    function mostrarFotoAtualNoModal() {
+      if (fotoAtualIndex < 0 || fotoAtualIndex >= fotosCache.length) return;
+
+      const foto = fotosCache[fotoAtualIndex];
+      imgModal.src = foto._urlImagem || "";
+      imgModal.alt = foto.titulo || ("Foto " + (fotoAtualIndex + 1));
+      atualizarVisibilidadeSetas();
+    }
+
+    function abrirModalPorIndice(index) {
+      if (!fotosCache.length) return;
+
+      if (index < 0) index = fotosCache.length - 1;
+      if (index >= fotosCache.length) index = 0;
+
+      fotoAtualIndex = index;
+      mostrarFotoAtualNoModal();
+      modalFoto.classList.add("ativo");
+      atualizarVisibilidadeSetas();
+    }
+
+    function navegarFotos(direcao) {
+      if (!modalFoto.classList.contains("ativo")) return;
+      if (!fotosCache.length) return;
+      abrirModalPorIndice(fotoAtualIndex + direcao);
+    }
+
     function abrirModal(src, alt) {
+      const idx = fotosCache.findIndex(function(f) {
+        return String(f._urlImagem || "") === String(src || "");
+      });
+
+      if (idx >= 0) {
+        abrirModalPorIndice(idx);
+        return;
+      }
+
+      fotoAtualIndex = -1;
       imgModal.src = src;
       imgModal.alt = alt || "Foto ampliada";
       modalFoto.classList.add("ativo");
+      atualizarVisibilidadeSetas();
     }
 
     function fecharModal() {
       modalFoto.classList.remove("ativo");
       imgModal.src = "";
       imgModal.alt = "Foto ampliada";
+      fotoAtualIndex = -1;
+      atualizarVisibilidadeSetas();
     }
 
     function escapeHtml(text) {
@@ -497,13 +609,27 @@
 
     btnFullscreen.addEventListener("click", alternarTelaCheia);
     btnFecharModal.addEventListener("click", fecharModal);
+    btnFotoAnterior.addEventListener("click", function() {
+      navegarFotos(-1);
+    });
+    btnFotoProxima.addEventListener("click", function() {
+      navegarFotos(1);
+    });
 
     modalFoto.addEventListener("click", function(e) {
       if (e.target === modalFoto) fecharModal();
     });
 
     document.addEventListener("keydown", function(e) {
-      if (e.key === "Escape" && modalFoto.classList.contains("ativo")) fecharModal();
+      if (!modalFoto.classList.contains("ativo")) return;
+
+      if (e.key === "Escape") {
+        fecharModal();
+      } else if (e.key === "ArrowLeft") {
+        navegarFotos(-1);
+      } else if (e.key === "ArrowRight") {
+        navegarFotos(1);
+      }
     });
 
     btnUploadFoto.addEventListener("click", async function () {
@@ -582,6 +708,8 @@
 
     async function carregarFotos() {
       galeriaGrid.innerHTML = '<div class="vazio">Carregando fotos...</div>';
+      fotosCache = [];
+      atualizarVisibilidadeSetas();
 
       const { data, error } = await supabaseClient
         .from("fotos_galeria")
@@ -599,17 +727,24 @@
         return;
       }
 
+      fotosCache = data.map(function(foto) {
+        return {
+          ...foto,
+          _urlImagem: montarUrlFoto(foto)
+        };
+      });
+
       let html = "";
 
-      data.forEach(function(foto, index) {
-        const urlImagem = montarUrlFoto(foto);
+      fotosCache.forEach(function(foto, index) {
+        const urlImagem = foto._urlImagem;
         const botaoExcluir = usuarioAdmin
           ? `<button class="btn-excluir-foto" type="button" onclick="excluirFoto(${foto.id}, '${escapeJs(foto.caminho_arquivo || "")}')">Excluir foto</button>`
           : "";
 
         html += `
           <div class="foto-card">
-            <div class="foto-wrap" onclick="abrirModal('${escapeJs(urlImagem)}', '${escapeJs(foto.titulo || "")}')">
+            <div class="foto-wrap" onclick="abrirModalPorIndice(${index})">
               <img
                 src="${escapeHtml(urlImagem)}"
                 alt="${escapeHtml(foto.titulo || ("Foto " + (index + 1)))}"
@@ -664,6 +799,7 @@
     }
 
     window.abrirModal = abrirModal;
+    window.abrirModalPorIndice = abrirModalPorIndice;
     window.excluirFoto = excluirFoto;
 
     (async function iniciarPagina() {
